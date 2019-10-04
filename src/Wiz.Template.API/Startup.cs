@@ -78,6 +78,9 @@ namespace Wiz.Template.API
 
             #endregion
 
+            // Ativando o uso de cache em memória
+            services.AddMemoryCache();
+
             services.AddApiVersioning(x => x.ApiVersionReader = new HeaderApiVersionReader("api-version"));
             services.Configure<GzipCompressionProviderOptions>(x => x.Level = CompressionLevel.Optimal);
             services.AddResponseCompression(x =>
@@ -161,6 +164,7 @@ namespace Wiz.Template.API
             #region Service
 
             services.AddScoped<ICustomerService, CustomerService>();
+            services.AddScoped<IAuthService, AuthService>();
 
             #endregion
 

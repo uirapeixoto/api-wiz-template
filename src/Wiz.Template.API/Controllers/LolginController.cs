@@ -46,7 +46,9 @@ namespace Wiz.Template.API.Controllers
                     new GenericIdentity(usuario.UserId, "Login"),
                     new[] {
                         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
-                        new Claim(JwtRegisteredClaimNames.UniqueName, usuario.UserId)
+                        new Claim(JwtRegisteredClaimNames.UniqueName, usuario.AccessKey),
+                        new Claim(JwtRegisteredClaimNames.Sid, usuario.AccessKey),
+                        new Claim(JwtRegisteredClaimNames.NameId, usuario.UserId)
                     }
                 );
 

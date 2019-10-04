@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Wiz.Template.API.Services.Interfaces;
+using Wiz.Template.API.ViewModels.Address;
 using Wiz.Template.API.ViewModels.Customer;
 using Wiz.Template.Domain.Interfaces.Notifications;
 using Wiz.Template.Domain.Interfaces.Repository;
@@ -21,6 +22,9 @@ namespace Wiz.Template.API.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
+        public IEnumerable<Customer> _customerData;
+        public IEnumerable<Address> _addressData;
+
         public CustomerService(ICustomerRepository customerRepository, IViaCEPService viaCEPService, IDomainNotification domainNotification, IUnitOfWork unitOfWork, IMapper mapper)
         {
             _customerRepository = customerRepository;
@@ -29,13 +33,35 @@ namespace Wiz.Template.API.Services
             _unitOfWork = unitOfWork;
             _mapper = mapper;
 
-            InitializeData();
+            _addressData = new List<Address>()
+                {
+                    new Address(cep: "17052520"){ Id = 1},
+                    new Address(cep: "44573100"){ Id = 2},
+                    new Address(cep: "50080490"){ Id = 3}
+                };
+
+            _customerData = new List<Customer>()
+                {
+                    new Customer(addressId: _addressData.First(x => x.CEP == "17052520").Id, name: "Zier Zuveiku"),
+                    new Customer(addressId: _addressData.First(x => x.CEP == "44573100").Id, name: "Vikehel Pleamakh"),
+                    new Customer(addressId: _addressData.First(x => x.CEP == "50080490").Id, name: "Diuor PleaBolosmakh")
+                };
+
+            
 
         }
 
         public async Task<IEnumerable<CustomerAddressViewModel>> GetAllAsync()
         {
-            var customers = _mapper.Map<IEnumerable<CustomerAddressViewModel>>(await Task.FromResult(_customerData));
+            var customers = _customerData.Select(x => new CustomerAddressViewModel {
+                Id = x.Id,
+                AddressId = x.AddressId,
+                Name = x.Name,
+                DateCreated = x.DateCreated,
+                CEP = x.Address.CEP,
+                Address = new AddressViewModel(x.Address.Id, x.Address.CEP, "", "", "")
+
+            }).ToList();
 
             foreach (var customer in customers)
             {
@@ -108,7 +134,7 @@ namespace Wiz.Template.API.Services
              * Utilize transação somente se realizar mais de uma operação no banco de dados ou banco de dados distintos
             */
 
-            _customerData.Add(model);
+            //_customerData.Add(model);
             viewModel = _mapper.Map<CustomerViewModel>(model);
 
             return viewModel;
@@ -146,27 +172,6 @@ namespace Wiz.Template.API.Services
 
             _customerRepository.Remove(model);
             _unitOfWork.Commit();
-        }
-
-        public IList<Customer> _customerData;
-        public IList<Address> _addressData;
-
-        private void InitializeData()
-        {
-
-            _customerData = new List<Customer>()
-                {
-                    new Customer(addressId: _addressData.First(x => x.CEP == "17052520").Id, name: "Zier Zuveiku"),
-                    new Customer(addressId: _addressData.First(x => x.CEP == "44573100").Id, name: "Vikehel Pleamakh"),
-                    new Customer(addressId: _addressData.First(x => x.CEP == "50080490").Id, name: "Diuor PleaBolosmakh")
-                };
-
-            _addressData = new List<Address>()
-                {
-                    new Address(cep: "17052520"),
-                    new Address(cep: "44573100"),
-                    new Address(cep: "50080490")
-                };
         }
     }
 }
