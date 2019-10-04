@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.PlatformAbstractions;
 using System.Diagnostics.CodeAnalysis;
 using Wiz.Template.API.Extensions;
+using Wiz.Template.Infra.Context;
+using Wiz.Template.Infra.DataBaseInMemory;
 
 namespace Wiz.Template.API
 {

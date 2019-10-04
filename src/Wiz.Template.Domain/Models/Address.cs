@@ -14,9 +14,9 @@ namespace Wiz.Template.Domain.Models
             CEP = cep;
         }
 
-        public int Id { get; private set; }
-        public string CEP { get; private set; }
+        public int Id { get;  set; }
+        public string CEP { get; set; }
 
-        public ICollection<Customer> Customers { get; private set; }
+        public ICollection<Customer> Customers { get; set; }
     }
 }

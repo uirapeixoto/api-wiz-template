@@ -52,5 +52,6 @@ namespace Wiz.Template.API.Filters
 
             await next();
         }
+
     }
 }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Wiz.Template.API.Services.Interfaces;
 using Wiz.Template.API.ViewModels.Customer;
@@ -27,11 +28,14 @@ namespace Wiz.Template.API.Services
             _domainNotification = domainNotification;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+
+            InitializeData();
+
         }
 
         public async Task<IEnumerable<CustomerAddressViewModel>> GetAllAsync()
         {
-            var customers = _mapper.Map<IEnumerable<CustomerAddressViewModel>>(await _customerRepository.GetAllAsync());
+            var customers = _mapper.Map<IEnumerable<CustomerAddressViewModel>>(await Task.FromResult(_customerData));
 
             foreach (var customer in customers)
             {
@@ -48,12 +52,12 @@ namespace Wiz.Template.API.Services
 
         public async Task<CustomerViewModel> GetByIdAsync(CustomerIdViewModel customerVM)
         {
-            return _mapper.Map<CustomerViewModel>(await _customerRepository.GetByIdAsync(customerVM.Id));
+            return _mapper.Map<CustomerViewModel>(await Task.FromResult(_customerData.FirstOrDefault(x => x.Id == customerVM.Id)));
         }
 
         public async Task<CustomerAddressViewModel> GetAddressByIdAsync(CustomerIdViewModel customerVM)
         {
-            var customer = _mapper.Map<CustomerAddressViewModel>(await _customerRepository.GetAddressByIdAsync(customerVM.Id));
+            var customer = _mapper.Map<CustomerAddressViewModel>(await Task.FromResult(_customerData.FirstOrDefault(x => x.Id == customerVM.Id).Address));
 
             if (customer != null)
             {
@@ -70,7 +74,7 @@ namespace Wiz.Template.API.Services
 
         public async Task<CustomerAddressViewModel> GetAddressByNameAsync(CustomerNameViewModel customerVM)
         {
-            var customer = _mapper.Map<CustomerAddressViewModel>(await _customerRepository.GetByNameAsync(customerVM.Name));
+            var customer = _mapper.Map<CustomerAddressViewModel>(await Task.FromResult(_customerData.FirstOrDefault(x => x.Name == customerVM.Name)));
 
             if (customer != null)
             {
@@ -104,9 +108,7 @@ namespace Wiz.Template.API.Services
              * Utilize transação somente se realizar mais de uma operação no banco de dados ou banco de dados distintos
             */
 
-            _customerRepository.Add(model);
-            _unitOfWork.Commit();
-
+            _customerData.Add(model);
             viewModel = _mapper.Map<CustomerViewModel>(model);
 
             return viewModel;
@@ -124,8 +126,10 @@ namespace Wiz.Template.API.Services
                 return;
             }
 
-            _customerRepository.Update(model);
-            _unitOfWork.Commit();
+            var r = _customerData.FirstOrDefault(x => x.Id == model.Id);
+            r.Name = customerVM.Name;
+            r.Address = _mapper.Map<Address>(customerVM.Address);
+
         }
 
         public void Remove(CustomerViewModel customerVM)
@@ -142,6 +146,27 @@ namespace Wiz.Template.API.Services
 
             _customerRepository.Remove(model);
             _unitOfWork.Commit();
+        }
+
+        public IList<Customer> _customerData;
+        public IList<Address> _addressData;
+
+        private void InitializeData()
+        {
+
+            _customerData = new List<Customer>()
+                {
+                    new Customer(addressId: _addressData.First(x => x.CEP == "17052520").Id, name: "Zier Zuveiku"),
+                    new Customer(addressId: _addressData.First(x => x.CEP == "44573100").Id, name: "Vikehel Pleamakh"),
+                    new Customer(addressId: _addressData.First(x => x.CEP == "50080490").Id, name: "Diuor PleaBolosmakh")
+                };
+
+            _addressData = new List<Address>()
+                {
+                    new Address(cep: "17052520"),
+                    new Address(cep: "44573100"),
+                    new Address(cep: "50080490")
+                };
         }
     }
 }

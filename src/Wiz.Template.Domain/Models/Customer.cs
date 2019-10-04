@@ -4,7 +4,9 @@ namespace Wiz.Template.Domain.Models
 {
     public class Customer
     {
-        protected Customer() { }
+        protected Customer() {
+            DateCreated = DateTime.Now;
+        }
 
         public Customer(int id, int addressId, string name)
         {
@@ -19,11 +21,11 @@ namespace Wiz.Template.Domain.Models
             Name = name;
         }
 
-        public int Id { get; private set; }
-        public int AddressId { get; private set; }
-        public string Name { get; private set; }
-        public DateTime DateCreated { get; private set; }
+        public int Id { get;  set; }
+        public int AddressId { get;  set; }
+        public string Name { get;  set; }
+        public DateTime DateCreated { get;  set; }
 
-        public Address Address { get; private set; }
+        public Address Address { get;  set; }
     }
 }

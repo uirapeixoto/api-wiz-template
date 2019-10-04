@@ -62,42 +62,21 @@ namespace Wiz.Template.API
             services.AddMvc(options =>
             {
                 options.Filters.Add<DomainNotificationFilter>();
+                options.Filters.Add<ActionFilterAuthState>();
                 options.EnableEndpointRouting = false;
             }).SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
             .AddJsonOptions(options =>
              {
                  options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
              });
-            services.AddAuthentication(options =>
-            {
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-            {
-                options.Authority = Configuration["WizID:Authority"];
-                options.Audience = Configuration["WizID:Audience"];
-                options.RequireHttpsMetadata = false;
-                options.Events = new JwtBearerEvents
-                {
-                    //Remover warning caso há alguma validação do token assíncrona (async/await)
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-                    OnTokenValidated = async ctx =>
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-                    {
-                        //Exemplo para recuperar informações do token JWT e utilizar no serviço: IIdentityService
-                        var jwtClaimScope = ctx.Principal.Claims.FirstOrDefault(x => x.Type == "scope")?.Value;
 
-                        var claims = new List<Claim>
-                        {
-                            new Claim(ClaimTypes.System, jwtClaimScope),
-                            new Claim(ClaimTypes.Authentication, ((JwtSecurityToken)ctx.SecurityToken).RawData)
-                        };
+            #region configuração da autenticação por token
 
-                        var claimsIdentity = new ClaimsIdentity(claims);
-                        ctx.Principal.AddIdentity(claimsIdentity);
-                        ctx.Success();
-                    }
-                };
-            });
+            var authSettings = new AuthSettings(Configuration);
+            authSettings.RegisterAuthService(services);
+            authSettings.RegisterAuthRepository(services);
+
+            #endregion
 
             services.AddApiVersioning(x => x.ApiVersionReader = new HeaderApiVersionReader("api-version"));
             services.Configure<GzipCompressionProviderOptions>(x => x.Level = CompressionLevel.Optimal);
@@ -120,23 +99,6 @@ namespace Wiz.Template.API
                    durationOfBreak: TimeSpan.FromSeconds(30)
             ));
 
-            if (PlatformServices.Default.Application.ApplicationName != "testhost")
-            {
-                var healthCheck = services.AddHealthChecksUI().AddHealthChecks();
-
-                healthCheck.AddSqlServer(Configuration["ConnectionStrings:CustomerDB"]);
-
-                if (HostingEnvironment.IsProduction())
-                {
-                    healthCheck.AddAzureKeyVault(options =>
-                    {
-                        options.UseKeyVaultUrl($"{Configuration["Azure:KeyVaultUrl"]}");
-                    }, name: "azure-key-vault");
-                }
-
-                healthCheck.AddApplicationInsightsPublisher();
-            }
-
             if (!HostingEnvironment.IsProduction())
             {
                 services.AddOpenApiDocument(document =>
@@ -158,7 +120,6 @@ namespace Wiz.Template.API
 
             services.AddAutoMapper(typeof(Startup));
             services.AddHttpContextAccessor();
-
             RegisterServices(services);
         }
 
@@ -176,18 +137,6 @@ namespace Wiz.Template.API
             app.UseHttpsRedirection();
             app.UseResponseCompression();
 
-            if (PlatformServices.Default.Application.ApplicationName != "testhost")
-            {
-                app.UseHealthChecks("/health", new HealthCheckOptions()
-                {
-                    Predicate = _ => true,
-                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-                }).UseHealthChecksUI(setup =>
-                {
-                    setup.UIPath = "/health-ui";
-                });
-            }
-
             if (!env.IsProduction())
             {
                 app.UseSwagger();
@@ -195,7 +144,7 @@ namespace Wiz.Template.API
             }
 
             app.UseAuthentication();
-            app.UseLogMiddleware();
+            //app.UseLogMiddleware();
 
             app.UseExceptionHandler(new ExceptionHandlerOptions
             {
