@@ -4,9 +4,9 @@ namespace Wiz.Template.Domain.Models
 {
     public class Address
     {
-        protected Address()
+        public Address()
         {
-            Customers = new HashSet<Customer>();
+            Customers = new List<Customer>();
         }
 
         public Address(string cep)
@@ -17,6 +17,6 @@ namespace Wiz.Template.Domain.Models
         public int Id { get;  set; }
         public string CEP { get; set; }
 
-        public ICollection<Customer> Customers { get; set; }
+        public IEnumerable<Customer> Customers { get; set; }
     }
 }

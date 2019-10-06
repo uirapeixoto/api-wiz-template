@@ -27,9 +27,9 @@ namespace Wiz.Template.Infra.Context
 
                 var customers = new List<Customer>()
                 {
-                    new Customer(addressId: addresses.First(x => x.CEP == "17052520").Id, name: "Zier Zuveiku"),
-                    new Customer(addressId: addresses.First(x => x.CEP == "44573100").Id, name: "Vikehel Pleamakh"),
-                    new Customer(addressId: addresses.First(x => x.CEP == "50080490").Id, name: "Diuor PleaBolosmakh")
+                    new Customer{ Id = 1, AddressId = addresses.First(x => x.CEP == "17052520").Id, Name = "Zier Zuveiku" },
+                    new Customer{ Id = 2, AddressId  = addresses.First(x => x.CEP == "44573100").Id, Name = "Vikehel Pleamakh"},
+                    new Customer{ Id = 3, AddressId   = addresses.First(x => x.CEP == "50080490").Id, Name = "Diuor PleaBolosmakh"}
                 };
 
                 context.AddRange(customers);

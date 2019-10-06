@@ -1,16 +1,16 @@
-﻿namespace Wiz.Template.API.ViewModels.Address
+﻿using System.Collections.Generic;
+using Wiz.Template.API.ViewModels.Customer;
+
+namespace Wiz.Template.API.ViewModels.Address
 {
     public class AddressViewModel
     {
-        public AddressViewModel() { }
-
-        public AddressViewModel(int id, string cep, string street, string streetFull, string uf)
+        public AddressViewModel()
         {
-            Id = id;
-            CEP = cep;
-            Street = street;
-            StreetFull = streetFull;
-            UF = uf;
+            Customers = new List<CustomerViewModel>();
+            Street = "";
+            StreetFull = "";
+            UF = "";
         }
 
         public int Id { get; set; }
@@ -18,5 +18,7 @@
         public string Street { get; set; }
         public string StreetFull { get; set; }
         public string UF { get; set; }
+
+        public IEnumerable<CustomerViewModel> Customers{get; set;}
     }
 }

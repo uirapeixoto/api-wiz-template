@@ -21,31 +21,31 @@ namespace Wiz.Template.Unit.Tests.Mocks
         public static Faker<CustomerAddressViewModel> CustomerAddressViewModelFaker =>
             new Faker<CustomerAddressViewModel>()
             .CustomInstantiator(x => new CustomerAddressViewModel
-            (
-                id: x.Random.Number(1, 10),
-                addressId: x.Random.Number(1, 10),
-                name: x.Person.FullName,
-                dateCreated: x.Date.Future(),
-                cep: x.Address.ZipCode()
-            ));
+            {
+                Id = x.Random.Number(1, 10),
+                AddressId = x.Random.Number(1, 10),
+                Name = x.Person.FullName,
+                DateCreated = x.Date.Future(),
+                CEP = x.Address.ZipCode()
+            });
 
         public static Faker<Customer> CustomerModelFaker =>
             new Faker<Customer>()
             .CustomInstantiator(x => new Customer
-            (
-                id: x.Random.Number(1, 10),
-                addressId: x.Random.Number(1, 10),
-                name: x.Person.FullName
-            ));
+            {
+                Id = x.Random.Number(1, 10),
+                AddressId = x.Random.Number(1, 10),
+                Name = x.Person.FullName,
+            });
 
         public static Faker<CustomerViewModel> CustomerViewModelFaker =>
             new Faker<CustomerViewModel>()
             .CustomInstantiator(x => new CustomerViewModel
-            (
-                id: x.Random.Number(1, 10),
-                addressId: x.Random.Number(1, 10),
-                name: x.Person.FullName
-            ));
+            {
+                Id = x.Random.Number(1, 10),
+                AddressId = x.Random.Number(1, 10),
+                Name = x.Person.FullName,
+            });
 
         public static Faker<CustomerIdViewModel> CustomerIdViewModelFaker =>
             new Faker<CustomerIdViewModel>()

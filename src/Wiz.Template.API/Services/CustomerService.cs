@@ -16,10 +16,8 @@ namespace Wiz.Template.API.Services
 {
     public class CustomerService : ICustomerService
     {
-        private readonly ICustomerRepository _customerRepository;
         private readonly IViaCEPService _viaCEPService;
         private readonly IDomainNotification _domainNotification;
-        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
         public IEnumerable<Customer> _customerData;
@@ -27,28 +25,23 @@ namespace Wiz.Template.API.Services
 
         public CustomerService(ICustomerRepository customerRepository, IViaCEPService viaCEPService, IDomainNotification domainNotification, IUnitOfWork unitOfWork, IMapper mapper)
         {
-            _customerRepository = customerRepository;
             _viaCEPService = viaCEPService;
             _domainNotification = domainNotification;
-            _unitOfWork = unitOfWork;
             _mapper = mapper;
 
             _addressData = new List<Address>()
                 {
-                    new Address(cep: "17052520"){ Id = 1},
-                    new Address(cep: "44573100"){ Id = 2},
-                    new Address(cep: "50080490"){ Id = 3}
+                    new Address{ CEP = "17052520", Id = 1, Customers = new List<Customer>{ new Customer{Id = 1}}},
+                    new Address{ CEP = "44573100", Id = 2, Customers = new List<Customer>{ new Customer{Id = 2}}},
+                    new Address{ CEP = "50080490", Id = 3, Customers = new List<Customer>{ new Customer{Id = 3}}}
                 };
 
             _customerData = new List<Customer>()
                 {
-                    new Customer(addressId: _addressData.First(x => x.CEP == "17052520").Id, name: "Zier Zuveiku"),
-                    new Customer(addressId: _addressData.First(x => x.CEP == "44573100").Id, name: "Vikehel Pleamakh"),
-                    new Customer(addressId: _addressData.First(x => x.CEP == "50080490").Id, name: "Diuor PleaBolosmakh")
+                    new Customer{ Id = 1, AddressId = 1, Name = "Zier Zuveiku", Address = _addressData.FirstOrDefault(x => x.Id.Equals(1))},
+                    new Customer{ Id = 2, AddressId = 2, Name = "Vikehel Pleamakh", Address = _addressData.FirstOrDefault(x => x.Id.Equals(2))},
+                    new Customer{ Id = 3, AddressId = 3, Name = "Diuor PleaBolosmakh", Address = _addressData.FirstOrDefault(x => x.Id.Equals(3))}
                 };
-
-            
-
         }
 
         public async Task<IEnumerable<CustomerAddressViewModel>> GetAllAsync()
@@ -58,8 +51,8 @@ namespace Wiz.Template.API.Services
                 AddressId = x.AddressId,
                 Name = x.Name,
                 DateCreated = x.DateCreated,
-                CEP = x.Address.CEP,
-                Address = new AddressViewModel(x.Address.Id, x.Address.CEP, "", "", "")
+                CEP = x.Address?.CEP,
+                Address = new AddressViewModel { Id = x.Address.Id, CEP = x.Address.CEP }
 
             }).ToList();
 
@@ -117,40 +110,12 @@ namespace Wiz.Template.API.Services
 
         public CustomerViewModel Add(CustomerViewModel customerVM)
         {
-            CustomerViewModel viewModel = null;
-            var model = _mapper.Map<Customer>(customerVM);
-
-            var validation = new CustomerInsertValidation(_customerRepository).Validate(model);
-
-            if (!validation.IsValid)
-            {
-                _domainNotification.AddNotifications(validation);
-                return viewModel;
-            }
-
-            /*
-             * EXEMPLO COM TRANSAÇÃO: 
-             * Adicione a função "BeginTransaction()": _unitOfWork.BeginTransaction();
-             * Utilize transação somente se realizar mais de uma operação no banco de dados ou banco de dados distintos
-            */
-
-            //_customerData.Add(model);
-            viewModel = _mapper.Map<CustomerViewModel>(model);
-
-            return viewModel;
+            return customerVM;
         }
 
         public void Update(CustomerViewModel customerVM)
         {
             var model = _mapper.Map<Customer>(customerVM);
-
-            var validation = new CustomerUpdateValidation(_customerRepository).Validate(model);
-
-            if (!validation.IsValid)
-            {
-                _domainNotification.AddNotifications(validation);
-                return;
-            }
 
             var r = _customerData.FirstOrDefault(x => x.Id == model.Id);
             r.Name = customerVM.Name;
@@ -160,18 +125,7 @@ namespace Wiz.Template.API.Services
 
         public void Remove(CustomerViewModel customerVM)
         {
-            var model = _mapper.Map<Customer>(customerVM);
-
-            var validation = new CustomerDeleteValidation().Validate(model);
-
-            if (!validation.IsValid)
-            {
-                _domainNotification.AddNotifications(validation);
-                return;
-            }
-
-            _customerRepository.Remove(model);
-            _unitOfWork.Commit();
+            
         }
     }
 }

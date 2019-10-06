@@ -28,6 +28,7 @@ namespace Wiz.Template.API.Controllers
         private IAuthService _auth;
 
         private TokenAttributeViewModel _token;
+        private CacheResponseViewModel _cacheResponse;
 
         public CotacoesController(IConfiguration configuration, IMemoryCache cache, ICustomerService service, IAuthService auth)
         {
@@ -35,6 +36,7 @@ namespace Wiz.Template.API.Controllers
             _cache = cache;
             _service = service;
             _auth = auth;
+            _cacheResponse = new CacheResponseViewModel();
 
         }
 
@@ -43,20 +45,18 @@ namespace Wiz.Template.API.Controllers
         {
             _token = _auth.GetTokenAttributes(User.Claims);
 
-
-            string valorJson = _cache.GetOrCreate(
-                "Cotacoes",  ctx =>
+            _cacheResponse.Data = await _cache.GetOrCreateAsync(
+                "Cotacoes", async ctx =>
                 {
                     ctx.SetAbsoluteExpiration(TimeSpan.FromSeconds(3600));
                     ctx.SetPriority(CacheItemPriority.High);
 
-                    return _token.AccessKey;
+                    _cacheResponse.Expiration = ctx.AbsoluteExpirationRelativeToNow.Value;
+
+                    return await _service.GetAllAsync();
                 });
 
-           // var r = await _service.GetAllAsync();
-
-
-            return Ok(new { data = valorJson });
+            return Ok(_cacheResponse);
         }
     }
 }
