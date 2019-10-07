@@ -18,8 +18,8 @@ namespace Wiz.Template.API.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiVersion("1.0")]
     [Produces("application/json")]
-    [Route("api/v{version:apiVersion}/cota")]
-    public class CotacoesController : ControllerBase
+    [Route("api/v{version:apiVersion}/customer-memory-cache")]
+    public class CustomerInMemoryCacheController : ControllerBase
     {
 
         private IConfiguration _configuration;
@@ -30,7 +30,7 @@ namespace Wiz.Template.API.Controllers
         private TokenAttributeViewModel _token;
         private CacheResponseViewModel _cacheResponse;
 
-        public CotacoesController(IConfiguration configuration, IMemoryCache cache, ICustomerService service, IAuthService auth)
+        public CustomerInMemoryCacheController(IConfiguration configuration, IMemoryCache cache, ICustomerService service, IAuthService auth)
         {
             _configuration = configuration;
             _cache = cache;

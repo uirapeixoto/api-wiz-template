@@ -18,7 +18,7 @@ namespace Wiz.Template.API.Controllers
     [ApiVersion("1.0")]
     [Produces("application/json")]
     [Route("api/v{version:apiVersion}/login")]
-    public class LolginController : ControllerBase
+    public class LoginController : ControllerBase
     {
         private readonly IUserRepository _repository;
         private IMemoryCache _cache;
@@ -28,7 +28,7 @@ namespace Wiz.Template.API.Controllers
 
         private CacheResponseViewModel _cacheResponse;
 
-        public LolginController(IUserRepository repository, IMemoryCache cache)
+        public LoginController(IUserRepository repository, IMemoryCache cache)
         {
             _repository = repository;
             _cache = cache;
