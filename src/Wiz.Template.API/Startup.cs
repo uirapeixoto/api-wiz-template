@@ -88,6 +88,8 @@ namespace Wiz.Template.API
                 x.Providers.Add<GzipCompressionProvider>();
             });
 
+            ResgisterRedis(services);
+
             services.AddHttpClient<IViaCEPService, ViaCEPService>((s, c) =>
             {
                 c.BaseAddress = new Uri(Configuration["API:ViaCEP"]);
@@ -157,6 +159,17 @@ namespace Wiz.Template.API
             app.UseMvc();
         }
 
+        private void ResgisterRedis(IServiceCollection services)
+        {
+            // Ativando o uso de cache via Redis
+            services.AddDistributedRedisCache(options =>
+            {
+                options.Configuration = "localhost";
+                options.InstanceName = "TesteRedisCache";
+            });
+
+        }
+
         private void RegisterServices(IServiceCollection services)
         {
             services.Configure<ApplicationInsightsSettings>(Configuration.GetSection("ApplicationInsights"));
@@ -177,7 +190,7 @@ namespace Wiz.Template.API
             #region Infra
 
             services.AddDbContext<EntityContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("CustomerDB")));
+                options.UseSqlServer(Configuration.GetConnectionString("ExemploJWT")));
             services.AddScoped<DapperContext>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
