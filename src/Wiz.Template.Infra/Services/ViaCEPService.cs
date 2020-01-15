@@ -20,7 +20,12 @@ namespace Wiz.Template.Infra.Services
             var response = await _httpClient.GetAsync($"{cep}/json");
             var stringResponse = await response.Content.ReadAsStringAsync();
 
-            return JsonSerializer.Deserialize<ViaCEP>(stringResponse);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            return JsonSerializer.Deserialize<ViaCEP>(stringResponse, options);
         }
     }
 }

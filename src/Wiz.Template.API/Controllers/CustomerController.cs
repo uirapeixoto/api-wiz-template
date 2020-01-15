@@ -9,7 +9,7 @@ using Wiz.Template.API.ViewModels.Customer;
 namespace Wiz.Template.API.Controllers
 {
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Produces("application/json")]
     [Route("api/v1/customers")]
     public class CustomerController : ControllerBase

@@ -13,6 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Net.Http.Headers;
+using Microsoft.OpenApi.Models;
 using NSwag;
 using NSwag.SwaggerGeneration.Processors.Security;
 using Polly;
@@ -66,36 +67,7 @@ namespace Wiz.Template.API
             }).AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.IgnoreNullValues = true;
-            });
-            services.AddAuthentication(options =>
-            {
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-            {
-                options.Authority = Configuration["WizID:Authority"];
-                options.Audience = Configuration["WizID:Audience"];
-                options.RequireHttpsMetadata = false;
-                options.Events = new JwtBearerEvents
-                {
-                    //Remover warning caso há alguma validação do token assíncrona (async/await)
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-                    OnTokenValidated = async ctx =>
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-                    {
-                        //Exemplo para recuperar informações do token JWT e utilizar no serviço: IIdentityService
-                        var jwtClaimScope = ctx.Principal.Claims.FirstOrDefault(x => x.Type == "scope")?.Value;
-
-                        var claims = new List<Claim>
-                        {
-                            new Claim(ClaimTypes.System, jwtClaimScope),
-                            new Claim(ClaimTypes.Authentication, ((JwtSecurityToken)ctx.SecurityToken).RawData)
-                        };
-
-                        var claimsIdentity = new ClaimsIdentity(claims);
-                        ctx.Principal.AddIdentity(claimsIdentity);
-                        ctx.Success();
-                    }
-                };
+                
             });
 
             services.Configure<GzipCompressionProviderOptions>(x => x.Level = CompressionLevel.Optimal);
@@ -104,58 +76,17 @@ namespace Wiz.Template.API
                 x.Providers.Add<GzipCompressionProvider>();
             });
 
-            services.AddHttpClient<IViaCEPService, ViaCEPService>((s, c) =>
-            {
-                c.BaseAddress = new Uri(Configuration["API:ViaCEP"]);
-                c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            }).AddTransientHttpErrorPolicy(policyBuilder => policyBuilder.OrResult(response =>
-                    !response.IsSuccessStatusCode)
-              .WaitAndRetryAsync(3, retry =>
-                   TimeSpan.FromSeconds(Math.Pow(2, retry)) +
-                   TimeSpan.FromMilliseconds(new Random().Next(0, 100))))
-              .AddTransientHttpErrorPolicy(policyBuilder => policyBuilder.CircuitBreakerAsync(
-                   handledEventsAllowedBeforeBreaking: 3,
-                   durationOfBreak: TimeSpan.FromSeconds(30)
-            ));
-
-            if (PlatformServices.Default.Application.ApplicationName != "testhost")
-            {
-                var healthCheck = services.AddHealthChecksUI().AddHealthChecks();
-
-                healthCheck.AddSqlServer(Configuration["ConnectionStrings:CustomerDB"]);
-
-                if (WebHostEnvironment.IsProduction())
-                {
-                    healthCheck.AddAzureKeyVault(options =>
-                    {
-                        options.UseKeyVaultUrl($"{Configuration["Azure:KeyVaultUrl"]}");
-                    }, name: "azure-key-vault");
-                }
-
-                healthCheck.AddApplicationInsightsPublisher();
-            }
+            ViaCepConfigurationService(services);
+            AuthenticationConfigurationService(services);
 
             if (!WebHostEnvironment.IsProduction())
             {
-                services.AddSwaggerDocument(document =>
-                {
-                    document.DocumentName = "v1";
-                    document.Version = "v1";
-                    document.Title = "Template API";
-                    document.Description = "API de Template";
-                    document.OperationProcessors.Add(new OperationSecurityScopeProcessor("JWT"));
-                    document.AddSecurity("JWT", Enumerable.Empty<string>(), new SwaggerSecurityScheme
-                    {
-                        Type = SwaggerSecuritySchemeType.ApiKey,
-                        Name = HeaderNames.Authorization,
-                        Description = "Token de autenticação via SSO",
-                        In = SwaggerSecurityApiKeyLocation.Header
-                    });
-                });
+                
             }
 
             services.AddAutoMapper(typeof(Startup));
             services.AddHttpContextAccessor();
+            services.AddOpenApiDocument();
 
             RegisterServices(services);
         }
@@ -175,22 +106,9 @@ namespace Wiz.Template.API
             app.UseHttpsRedirection();
             app.UseResponseCompression();
 
-            if (PlatformServices.Default.Application.ApplicationName != "testhost")
-            {
-                app.UseHealthChecks("/health", new HealthCheckOptions()
-                {
-                    Predicate = _ => true,
-                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-                }).UseHealthChecksUI(setup =>
-                {
-                    setup.UIPath = "/health-ui";
-                });
-            }
-
             if (!env.IsProduction())
             {
-                app.UseSwagger();
-                app.UseSwaggerUi3();
+
             }
 
             app.UseAuthorization();
@@ -235,6 +153,103 @@ namespace Wiz.Template.API
             services.AddScoped<IIdentityService, IdentityService>();
 
             #endregion
+        }
+
+        public void ViaCepConfigurationService(IServiceCollection services) {
+
+            services.AddHttpClient<IViaCEPService, ViaCEPService>((s, c) =>
+            {
+                c.BaseAddress = new Uri(Configuration["API:ViaCEP"]);
+                c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }).AddTransientHttpErrorPolicy(policyBuilder => policyBuilder.OrResult(response =>
+                    !response.IsSuccessStatusCode)
+              .WaitAndRetryAsync(3, retry =>
+                   TimeSpan.FromSeconds(Math.Pow(2, retry)) +
+                   TimeSpan.FromMilliseconds(new Random().Next(0, 100))))
+                  .AddTransientHttpErrorPolicy(policyBuilder => policyBuilder.CircuitBreakerAsync(
+                       handledEventsAllowedBeforeBreaking: 3,
+                       durationOfBreak: TimeSpan.FromSeconds(30)
+                ));
+        }
+
+        public void HealthCheckConfigurationService(IServiceCollection services)
+        {
+            if (PlatformServices.Default.Application.ApplicationName != "testhost")
+            {
+                var healthCheck = services.AddHealthChecksUI().AddHealthChecks();
+
+                healthCheck.AddSqlServer(Configuration["ConnectionStrings:CustomerDB"]);
+
+                if (WebHostEnvironment.IsProduction())
+                {
+                    healthCheck.AddAzureKeyVault(options =>
+                    {
+                        options.UseKeyVaultUrl($"{Configuration["Azure:KeyVaultUrl"]}");
+                    }, name: "azure-key-vault");
+                }
+
+                healthCheck.AddApplicationInsightsPublisher();
+            }
+        }
+
+        public void HealthCheckConfiguration(IApplicationBuilder app)
+        {
+            if (PlatformServices.Default.Application.ApplicationName != "testhost")
+            {
+                app.UseHealthChecks("/health", new HealthCheckOptions()
+                {
+                    Predicate = _ => true,
+                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                }).UseHealthChecksUI(setup =>
+                {
+                    setup.UIPath = "/health-ui";
+                });
+            }
+        }
+
+        public void SwaggerConfigurationService(IServiceCollection services)
+        {
+            // Register the Swagger generator, defining 1 or more Swagger documents
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "My API",
+                    Version = "v1",
+                    Description = "Templates"
+                });
+            });
+        }
+
+        public void AuthenticationConfigurationService(IServiceCollection services)
+        {
+            services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+            {
+                options.Authority = Configuration["WizID:Authority"];
+                options.Audience = Configuration["WizID:Audience"];
+                options.RequireHttpsMetadata = false;
+                options.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = async ctx =>
+                    {
+                        //Exemplo para recuperar informações do token JWT e utilizar no serviço: IIdentityService
+                        var jwtClaimScope = ctx.Principal.Claims.FirstOrDefault(x => x.Type == "scope")?.Value;
+
+                        var claims = new List<Claim>
+                        {
+                            new Claim(ClaimTypes.System, jwtClaimScope),
+                            new Claim(ClaimTypes.Authentication, ((JwtSecurityToken)ctx.SecurityToken).RawData)
+                        };
+
+                        var claimsIdentity = new ClaimsIdentity(claims);
+                        ctx.Principal.AddIdentity(claimsIdentity);
+                        ctx.Success();
+                    }
+                };
+            });
         }
     }
 }

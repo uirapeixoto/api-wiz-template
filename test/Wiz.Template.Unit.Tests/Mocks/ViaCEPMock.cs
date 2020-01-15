@@ -10,8 +10,10 @@ namespace Wiz.Template.Unit.Tests.Mocks
             .CustomInstantiator(x => new ViaCEP
             (
                 cep: x.Address.ZipCode(),
-                street: x.Address.StreetName(),
-                streetFull: x.Address.StreetAddress(),
+                logradouro: x.Address.StreetAddress(),
+                localidade: x.Address.StreetName(),
+                bairro: x.Address.Locale,
+                complemento: x.Address.StreetName(),
                 uf: x.Address.CountryCode(Bogus.DataSets.Iso3166Format.Alpha2)
             ));
     }

@@ -38,8 +38,10 @@ namespace Wiz.Template.API.Services
                 var address = await _viaCEPService.GetByCEPAsync(customer.CEP);
 
                 customer.Address.Id = customer.AddressId;
-                customer.Address.Street = address?.Street;
-                customer.Address.StreetFull = address?.StreetFull;
+                customer.Address.Localidade= address?.Localidade;
+                customer.Address.Logradouro = address?.Logradouro;
+                customer.Address.Complemento = address?.Complemento;
+                customer.Address.Bairro = address?.Bairro;
                 customer.Address.UF = address?.UF;
             }
 
@@ -60,8 +62,10 @@ namespace Wiz.Template.API.Services
                 var address = await _viaCEPService.GetByCEPAsync(customer.CEP);
 
                 customer.Address.Id = customer.AddressId;
-                customer.Address.Street = address?.Street;
-                customer.Address.StreetFull = address?.StreetFull;
+                customer.Address.Localidade = address?.Localidade;
+                customer.Address.Logradouro = address?.Logradouro;
+                customer.Address.Complemento = address?.Complemento;
+                customer.Address.Bairro = address?.Bairro;
                 customer.Address.UF = address?.UF;
             }
 
@@ -77,8 +81,10 @@ namespace Wiz.Template.API.Services
                 var address = await _viaCEPService.GetByCEPAsync(customer.CEP);
 
                 customer.Address.Id = customer.AddressId;
-                customer.Address.Street = address?.Street;
-                customer.Address.StreetFull = address?.StreetFull;
+                customer.Address.Localidade = address?.Localidade;
+                customer.Address.Logradouro = address?.Logradouro;
+                customer.Address.Complemento = address?.Complemento;
+                customer.Address.Bairro = address?.Bairro;
                 customer.Address.UF = address?.UF;
             }
 
