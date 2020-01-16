@@ -60,6 +60,12 @@ namespace Wiz.Template.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddOpenApiDocument(
+                doc => {
+                    doc.DocumentName = "Swagger";
+                    doc.Version = "v1";
+                    doc.Title = "Api Cobrança";
+                });
             services.AddMvc(options =>
             {
                 options.Filters.Add<DomainNotificationFilter>();
@@ -86,7 +92,6 @@ namespace Wiz.Template.API
 
             services.AddAutoMapper(typeof(Startup));
             services.AddHttpContextAccessor();
-            services.AddOpenApiDocument();
 
             RegisterServices(services);
         }
@@ -106,24 +111,22 @@ namespace Wiz.Template.API
             app.UseHttpsRedirection();
             app.UseResponseCompression();
 
-            if (!env.IsProduction())
-            {
-
-            }
-
             app.UseAuthorization();
             app.UseAuthentication();
             app.UseLogMiddleware();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
+            app.UseOpenApi();
+            app.UseSwaggerUi3();
 
             app.UseExceptionHandler(new ExceptionHandlerOptions
             {
                 ExceptionHandler = new ErrorHandlerMiddleware(options, env).Invoke
             });
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
         }
 
         private void RegisterServices(IServiceCollection services)
